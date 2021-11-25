@@ -1,5 +1,5 @@
 {
-  "name": "water-vending-machine",
+  "name": "alarm-monitoring",
   "private": true,
   "scripts": {
     "dev": "env-cmd -f .env.dev next dev",
