@@ -8,7 +8,8 @@ const MyConfigCat = {
         if (!client) {
             const SDK_KEY = process.env.SDK_KEY;
             const logger = MyLogger.getLogger();
-            client = configcat.createClient(SDK_KEY, {
+            client = configcat.createClientWithAutoPoll(SDK_KEY, {
+                pollIntervalSeconds: 1,
                 logger: logger,
                 configChanged: () => {
                     configChangeCallback();
