@@ -18,8 +18,11 @@ const MyConfigCat = {
         }
         return client;
     },
+    getClient() {
+        return client;
+    },
     async getValueAsync(key) {
-        return await this.createClient().getValueAsync(key, false);
+        return await this.getClient().getValueAsync(key, false);
     }
 }
 Object.freeze(MyConfigCat);

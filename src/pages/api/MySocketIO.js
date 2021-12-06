@@ -11,7 +11,7 @@ const MySocketIO = {
         return socketServer;
     },
     emit(topic, message){
-        this.createServer().emit(topic, message);
+        this.getServer().emit(topic, message);
     }
 }
 
