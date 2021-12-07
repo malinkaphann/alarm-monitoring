@@ -6,7 +6,9 @@ import MySocketIO from './MySocketIO';
 // to avoid error
 process.setMaxListeners(0);
 
-const IS_MONITORING_ENABLED_FLAG = process.env.NEXT_PUBLIC_IS_MONITORING_ENABLED;
+const IS_MONITORING_ENABLED_FLAG = 
+process.env.NEXT_PUBLIC_IS_MONITORING_ENABLED;
+
 const statusChannel = IS_MONITORING_ENABLED_FLAG;
 const alarmChannel = 'alarms';
 
@@ -28,76 +30,105 @@ const sendAlarms = (isMonitoringEnabled, io) => {
 // main entry
 const ioHandler = async (req, res) => {
 
-    // this is a callback which is called everytime a config is changed at configcat.
-    const configChangeHandler = async () => {
-        MyLogger.info('config has changed');
+    // catch all exceptions
+    try {
 
-        const isMonitoringEnabled = await MyConfigCat.getValueAsync(IS_MONITORING_ENABLED_FLAG);
-        MyLogger.info(`FROM ConfigCat: ${IS_MONITORING_ENABLED_FLAG} = ${isMonitoringEnabled}`);
+        // this is a callback which is called everytime 
+        // a config is changed at configcat.
+        const configChangeHandler = async () => {
+            MyLogger.info('config has changed');
 
-        const io = MySocketIO.getServer();
-        if (!io) {
-            MyLogger.error('socket io is not yet created');
+            const isMonitoringEnabled = await 
+            MyConfigCat.getValueAsync(IS_MONITORING_ENABLED_FLAG);
 
-            // always flush the response before returning
-            res.end();
-            return;
+            MyLogger.info(`FROM ConfigCat: ${IS_MONITORING_ENABLED_FLAG} = 
+                ${isMonitoringEnabled}`);
+
+            const io = MySocketIO.getServer();
+            if (!io) {
+                throw new Error('socket server io is not yet created');
+            }
+
+            MyLogger.info(`statusChannel = ${statusChannel} broadcasted message = 
+                ${isMonitoringEnabled}`);
+
+            io.emit(statusChannel, isMonitoringEnabled);
+
+            sendAlarms(isMonitoringEnabled, io);
         }
 
-        MyLogger.info(`statusChannel = ${statusChannel} broadcasted message = ${isMonitoringEnabled}`);
-        io.emit(statusChannel, isMonitoringEnabled);
+        // when this request handler is accessed for the very first time
+        if (!MySocketIO.getServer()) {
 
-        sendAlarms(isMonitoringEnabled, io);
-    }
+            MyLogger.info('socket io server is not yet created; \
+                so create one now');
 
-    // when this api server is accessed for the very first time
-    if (!MySocketIO.getServer()) {
+            const io = MySocketIO.createServer(res.socket.server);
 
-        MyLogger.info('socket io server is not yet created; so create one now');
-        const io = MySocketIO.createServer(res.socket.server);
+            // this should never happens, 
+            // but just in case.
+            if (!io) {
+                throw new Error('unexpected error, \
+                    socket io server can not be created');
+            }
 
-        // on client connection, get config value
-        io.on('connection', async (socket) => {
+            // on client connection, get config value
+            io.on('connection', async (socket) => {
 
-            const isMonitoringEnabled = await MyConfigCat.getValueAsync(IS_MONITORING_ENABLED_FLAG);
-            MyLogger.info(`FROM ConfigCat: ${IS_MONITORING_ENABLED_FLAG} = ${isMonitoringEnabled}`);
+                // this should never happens, 
+                // but just in case.
+                if (!MyConfigCat.getClient()) {
+                    throw new Error('unexpected error, \
+                        config cat client is not yet created');
+                }
 
-            socket.emit(statusChannel, isMonitoringEnabled)            
-            sendAlarms(isMonitoringEnabled, socket);
-        });
+                const isMonitoringEnabled = await 
+                    MyConfigCat.getValueAsync(IS_MONITORING_ENABLED_FLAG);
 
-        MyLogger.info('configcat client is not yet created; so create one now');
-        MyConfigCat.createClient(configChangeHandler);
+                MyLogger.info(`FROM ConfigCat: ${IS_MONITORING_ENABLED_FLAG} = 
+                ${isMonitoringEnabled}`);
 
-        res.end();
-        return;
-    }
+                socket.emit(statusChannel, isMonitoringEnabled)
+                sendAlarms(isMonitoringEnabled, socket);
+            });
 
-    // to handle the GET request from client
-    if (req.method === 'GET') {
+            MyLogger.info('configcat client is not yet created; \
+                so create one now');
 
-        const io = MySocketIO.getServer();
-        if (!io) {
-            MyLogger.error('socket io is not yet created');
+            MyConfigCat.createClient(configChangeHandler);
+
             res.end();
-            return;
         }
 
-        MyLogger.info('receive a GET request from client');
-        const isMonitoringEnabled = await MyConfigCat.getValueAsync(IS_MONITORING_ENABLED_FLAG);
-        MyLogger.info(`FROM ConfigCat: ${IS_MONITORING_ENABLED_FLAG} = ${isMonitoringEnabled}`);
+        // to handle the GET request from client
+        if (req.method === 'GET') {
 
-        io.emit(statusChannel, isMonitoringEnabled)
-        sendAlarms(isMonitoringEnabled, io);
+            // socket io server is supposed to be already created
+            const io = MySocketIO.getServer();
+            if (!io) {
+                throw new Error('socket io is not yet created');
+            }
 
+            MyLogger.info('receive a GET request from client');
+
+            const isMonitoringEnabled = await 
+                MyConfigCat.getValueAsync(IS_MONITORING_ENABLED_FLAG);
+
+            MyLogger.info(`FROM ConfigCat: ${IS_MONITORING_ENABLED_FLAG} = 
+                ${isMonitoringEnabled}`);
+
+            io.emit(statusChannel, isMonitoringEnabled)
+            sendAlarms(isMonitoringEnabled, io);
+
+            res.end();
+        }
+
+    } catch (error) {
+
+        // can not afford to flush the response everytime
+        // there is an exception, so handle it here in one place.
+        MyLogger.error(error.message);
         res.end();
-        return;
-    }
-}
-
-export const config = {
-    api: {
-        bodyParser: false
     }
 }
 

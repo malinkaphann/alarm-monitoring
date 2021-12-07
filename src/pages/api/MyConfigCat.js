@@ -22,7 +22,11 @@ const MyConfigCat = {
         return client;
     },
     async getValueAsync(key) {
-        return await this.getClient().getValueAsync(key, false);
+        const configCatClient = this.getClient();
+        if (!configCatClient) {
+            throw new Error('config cat client is not yet created');
+        }
+        return await configCatClient.getValueAsync(key, false);
     }
 }
 Object.freeze(MyConfigCat);
