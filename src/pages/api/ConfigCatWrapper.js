@@ -1,13 +1,13 @@
 import * as configcat from "configcat-js-ssr";
-import MyLogger from "./MyLogger";
+import LoggerWrapper from "./LoggerWrapper";
 
 let client = null;
 
-const MyConfigCat = {
+const ConfigCatWrapper = {
     createClient(configChangeCallback) {
         if (!client) {
             const SDK_KEY = process.env.SDK_KEY;
-            const logger = MyLogger.getLogger();
+            const logger = LoggerWrapper.getLogger();
             client = configcat.createClientWithAutoPoll(SDK_KEY, {
                 pollIntervalSeconds: 1,
                 logger: logger,
@@ -29,6 +29,7 @@ const MyConfigCat = {
         return await configCatClient.getValueAsync(key, false);
     }
 }
-Object.freeze(MyConfigCat);
 
-export default MyConfigCat;
+Object.freeze(ConfigCatWrapper);
+
+export default ConfigCatWrapper;

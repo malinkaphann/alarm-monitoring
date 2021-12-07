@@ -11,7 +11,7 @@ const LOG_LEVEL = {
     INFO: 3
 };
 
-const MyLogger = {
+const LoggerWrapper = {
     getLogger() {
         if (!logger) {
             logger = configcat.createConsoleLogger(GLOBAL_LOG_LEVEL);
@@ -35,6 +35,6 @@ const MyLogger = {
     }
 }
 
-Object.freeze(MyLogger);
+Object.freeze(LoggerWrapper);
 
-export default MyLogger;
+export default LoggerWrapper;

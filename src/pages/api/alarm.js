@@ -1,7 +1,7 @@
 import { ALARMS } from './AlarmData';
-import MyConfigCat from './MyConfigCat';
-import MyLogger from './MyLogger';
-import MySocketIO from './MySocketIO';
+import ConfigCatWrapper from './ConfigCatWrapper';
+import LoggerWrapper from './LoggerWrapper';
+import SocketIOWrapper from './SocketIOWrapper';
 
 // to avoid error
 process.setMaxListeners(0);
@@ -28,7 +28,7 @@ const sendAlarms = (isMonitoringEnabled, io) => {
 }
 
 // main entry
-const ioHandler = async (req, res) => {
+const MyController = async (req, res) => {
 
     // catch all exceptions
     try {
@@ -36,34 +36,33 @@ const ioHandler = async (req, res) => {
         // this is a callback which is called everytime 
         // a config is changed at configcat.
         const configChangeHandler = async () => {
-            MyLogger.info('config has changed');
+            LoggerWrapper.info('config has changed');
 
             const isMonitoringEnabled = await 
-            MyConfigCat.getValueAsync(IS_MONITORING_ENABLED_FLAG);
+            ConfigCatWrapper.getValueAsync(IS_MONITORING_ENABLED_FLAG);
 
-            MyLogger.info(`FROM ConfigCat: ${IS_MONITORING_ENABLED_FLAG} = 
+            LoggerWrapper.info(`FROM ConfigCat: ${IS_MONITORING_ENABLED_FLAG} = 
                 ${isMonitoringEnabled}`);
 
-            const io = MySocketIO.getServer();
+            const io = SocketIOWrapper.getServer();
             if (!io) {
                 throw new Error('socket server io is not yet created');
             }
 
-            MyLogger.info(`statusChannel = ${statusChannel} broadcasted message = 
+            LoggerWrapper.info(`statusChannel = ${statusChannel} broadcasted message = 
                 ${isMonitoringEnabled}`);
 
             io.emit(statusChannel, isMonitoringEnabled);
-
             sendAlarms(isMonitoringEnabled, io);
         }
 
         // when this request handler is accessed for the very first time
-        if (!MySocketIO.getServer()) {
+        if (!SocketIOWrapper.getServer()) {
 
-            MyLogger.info('socket io server is not yet created; \
+            LoggerWrapper.info('socket io server is not yet created; \
                 so create one now');
 
-            const io = MySocketIO.createServer(res.socket.server);
+            const io = SocketIOWrapper.createServer(res.socket.server);
 
             // this should never happens, 
             // but just in case.
@@ -77,44 +76,48 @@ const ioHandler = async (req, res) => {
 
                 // this should never happens, 
                 // but just in case.
-                if (!MyConfigCat.getClient()) {
+                if (!ConfigCatWrapper.getClient()) {
                     throw new Error('unexpected error, \
                         config cat client is not yet created');
                 }
 
                 const isMonitoringEnabled = await 
-                    MyConfigCat.getValueAsync(IS_MONITORING_ENABLED_FLAG);
+                    ConfigCatWrapper.getValueAsync(IS_MONITORING_ENABLED_FLAG);
 
-                MyLogger.info(`FROM ConfigCat: ${IS_MONITORING_ENABLED_FLAG} = 
+                LoggerWrapper.info(`FROM ConfigCat: ${IS_MONITORING_ENABLED_FLAG} = 
                 ${isMonitoringEnabled}`);
 
                 socket.emit(statusChannel, isMonitoringEnabled)
                 sendAlarms(isMonitoringEnabled, socket);
             });
 
-            MyLogger.info('configcat client is not yet created; \
+            LoggerWrapper.info('configcat client is not yet created; \
                 so create one now');
 
-            MyConfigCat.createClient(configChangeHandler);
+            const client = ConfigCatWrapper.createClient(configChangeHandler);
 
-            res.end();
+            // this should never hapens,
+            // but just in case
+            if (!client) {
+                throw new Error('can not create configcat client');
+            }
         }
 
         // to handle the GET request from client
         if (req.method === 'GET') {
 
             // socket io server is supposed to be already created
-            const io = MySocketIO.getServer();
+            const io = SocketIOWrapper.getServer();
             if (!io) {
                 throw new Error('socket io is not yet created');
             }
 
-            MyLogger.info('receive a GET request from client');
+            LoggerWrapper.info('receive a GET request from client');
 
             const isMonitoringEnabled = await 
-                MyConfigCat.getValueAsync(IS_MONITORING_ENABLED_FLAG);
+                ConfigCatWrapper.getValueAsync(IS_MONITORING_ENABLED_FLAG);
 
-            MyLogger.info(`FROM ConfigCat: ${IS_MONITORING_ENABLED_FLAG} = 
+            LoggerWrapper.info(`FROM ConfigCat: ${IS_MONITORING_ENABLED_FLAG} = 
                 ${isMonitoringEnabled}`);
 
             io.emit(statusChannel, isMonitoringEnabled)
@@ -122,14 +125,14 @@ const ioHandler = async (req, res) => {
 
             res.end();
         }
-
+        
     } catch (error) {
 
         // can not afford to flush the response everytime
         // there is an exception, so handle it here in one place.
-        MyLogger.error(error.message);
+        LoggerWrapper.error(error.message);
         res.end();
     }
 }
 
-export default ioHandler;
+export default MyController;

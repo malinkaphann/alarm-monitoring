@@ -2,7 +2,7 @@ import { Server } from 'socket.io';
 
 let socketServer = null;
 
-const MySocketIO = {
+const SocketIOWrapper = {
     createServer(server) {
         if (!socketServer) {
             socketServer = new Server(server);
@@ -21,6 +21,6 @@ const MySocketIO = {
     }
 }
 
-Object.freeze(MySocketIO);  
+Object.freeze(SocketIOWrapper);
 
-export default MySocketIO;
+export default SocketIOWrapper;
