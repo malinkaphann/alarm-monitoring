@@ -30,14 +30,12 @@ yarn dev:prod
 
 ```
 yarn build
-
 ```
 
 ## Build by using production's variables
 
 ```
 yarn build:prod
-
 ```
 
 ## Start
@@ -47,5 +45,4 @@ This depends on the **build** command. So the **start** command will run using t
 
 ```
 yarn start
-
 ```
