@@ -58,8 +58,7 @@ const MyController = async (req, res) => {
     // when this request handler is accessed for the very first time
     if (!SocketIOWrapper.getServer()) {
       LoggerWrapper.info(
-        "socket io server is not yet created; \
-                so create one now"
+        "socket io server is not yet created, so create one now"
       );
 
       const io = SocketIOWrapper.createServer(res.socket.server);
@@ -68,8 +67,7 @@ const MyController = async (req, res) => {
       // but just in case.
       if (!io) {
         throw new Error(
-          "unexpected error, \
-                    socket io server can not be created"
+          "unexpected error, socket io server can not be created"
         );
       }
 
@@ -79,8 +77,7 @@ const MyController = async (req, res) => {
         // but just in case.
         if (!ConfigCatWrapper.getClient()) {
           throw new Error(
-            "unexpected error, \
-                        config cat client is not yet created"
+            "unexpected error, config cat client is not yet created"
           );
         }
 
@@ -96,8 +93,7 @@ const MyController = async (req, res) => {
       });
 
       LoggerWrapper.info(
-        "configcat client is not yet created; \
-                so create one now"
+        "configcat client is not yet created, so create one now"
       );
 
       const client = ConfigCatWrapper.createClient(configChangeHandler);
