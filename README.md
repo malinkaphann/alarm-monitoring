@@ -4,7 +4,7 @@ This is an Alarm Monitoring Application, implemented using [Nextjs Framework](ht
 
 ## DEV vs BUILD vs START
 
-Find more details about these command in here.
+Find more details about these commands in here.
 
 [Nextjs Commands](https://nextjs.org/docs/api-reference/cli)
 
