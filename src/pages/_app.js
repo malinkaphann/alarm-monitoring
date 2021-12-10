@@ -1,7 +1,7 @@
 import Layout from '@/components/Layout';
 import { ThemeProvider } from '@theme-ui/theme-provider';
 import '../styles/globals.css'
-import { theme } from './theme';
+import { theme } from '../components/theme';
 
 function MyApp({ Component, pageProps }) {
 

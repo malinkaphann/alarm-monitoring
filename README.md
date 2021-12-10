@@ -26,22 +26,13 @@ yarn dev
 yarn dev:prod
 ```
 
-## Build by using development's variables
+## Build
 
 ```
 yarn build
 ```
 
-## Build by using production's variables
-
-```
-yarn build:prod
-```
-
 ## Start
-
-This depends on the **build** command. So the **start** command will run using those variables in the **build** command.
-
 
 ```
 yarn start
